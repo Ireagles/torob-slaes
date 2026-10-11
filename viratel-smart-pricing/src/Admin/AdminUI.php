@@ -17,12 +17,12 @@ final class AdminUI
         "dashboard" => "داشبورد",
         "products" => "محصولات",
         "sources" => "منابع و تطبیق",
-        "rules" => "قواعد و گروه‌ها",
+        "rules" => "قیمت‌گذاری",
         "proposals" => "پیشنهادها",
         "queue" => "صف",
         "history" => "تاریخچه",
         "csv" => "ورود و خروج CSV",
-        "settings" => "تنظیمات",
+        "settings" => "تنظیمات عمومی",
     ];
     public function register(): void
     {
@@ -38,12 +38,7 @@ final class AdminUI
         });
         add_action("admin_enqueue_scripts", function () {
             if (($_GET["page"] ?? "") === "viratel-smart-pricing") {
-                wp_enqueue_style(
-                    "vsp-admin",
-                    plugins_url("assets/admin.css", VSP_FILE),
-                    [],
-                    VSP_VERSION,
-                );
+                self::enqueue();
             }
         });
         add_action("admin_post_vsp_action", [$this, "handle"]);
@@ -128,12 +123,43 @@ final class AdminUI
             },
         ]);
     }
+    public static function enqueue(): void
+    {
+        wp_enqueue_style(
+            "vsp-admin",
+            plugins_url("assets/admin.css", VSP_FILE),
+            [],
+            VSP_VERSION,
+        );
+        $accent =
+            sanitize_hex_color(Settings::get()["accent_color"] ?? "#7357e8") ?:
+            "#7357e8";
+        wp_add_inline_style(
+            "vsp-admin",
+            ".vsp-wrap,.vsp-product-panel{--vsp-accent:" . $accent . ";}",
+        );
+    }
     private function begin(string $op, array $hidden = []): void
     {
         echo '<form method="post" action="' .
             esc_url(admin_url("admin-post.php")) .
             '" enctype="multipart/form-data" class="vsp-form">';
         wp_nonce_field("vsp_admin");
+        $returnTab =
+            [
+                "settings" => "settings",
+                "defaults" => "rules",
+                "mapping" => "products",
+                "group" => "rules",
+                "poll" => "sources",
+                "preview" => "proposals",
+                "csv_stage" => "csv",
+                "csv_apply" => "csv",
+                "csv_rollback" => "csv",
+            ][$op] ?? "dashboard";
+        echo '<input type="hidden" name="return_tab" value="' .
+            esc_attr($returnTab) .
+            '">';
         echo '<input type="hidden" name="action" value="vsp_action"><input type="hidden" name="operation" value="' .
             esc_attr($op) .
             '">';
@@ -202,9 +228,13 @@ final class AdminUI
         }
         $repo = new Repository();
         $s = Settings::get();
-        echo '<div class="wrap vsp-wrap" dir="rtl"><h1>قیمت‌گذاری هوشمند ویراتل <small>۰٫۱ — نسخه آزمایشی</small></h1><p>رتبه قیمتی مشاهده‌شده با موقعیت نمایش در ترب متفاوت است.</p>';
+        echo '<div class="wrap vsp-wrap" dir="rtl"><header class="vsp-page-head"><div><span class="vsp-eyebrow">VIRATEL SMART PRICING</span><h1>' .
+            esc_html($s["panel_title"] ?? "قیمت‌گذاری هوشمند ویراتل") .
+            '</h1><p>کنترل قیمت قطعات، با قواعدی که شما تعیین می‌کنید.</p></div><div class="vsp-head-meta"><span class="vsp-badge">نسخه ' .
+            esc_html(VSP_VERSION) .
+            '</span><span class="vsp-badge vsp-badge-neutral">نسخه آزمایشی</span></div></header>';
         if (isset($_GET["result"])) {
-            echo '<div class="notice notice-info"><p>' .
+            echo '<div class="vsp-notice" role="status"><p>' .
                 esc_html(
                     $_GET["result"] === "ok"
                         ? "عملیات ثبت شد."
@@ -248,7 +278,7 @@ final class AdminUI
                     : "توقف اضطراری اعمال قیمت",
             );
         }
-        echo '<div class="notice notice-warning inline"><p>مسیر پایش JSON-LD عمومی ترب پیاده شده؛ موفقیت دریافت به اتصال همین هاست وابسته است. زمان داده، کیفیت و هویت فروشندگان احراز نشده است. اعمال خودکار با این داده مسدود می‌ماند. اتصال‌های دیگر پیکربندی نشده‌اند.</p></div>';
+        echo '<div class="vsp-alert"><span class="dashicons dashicons-shield" aria-hidden="true"></span><div><strong>پایش بدون تغییر قیمت؛ اعمال نیازمند داده معتبر</strong><p>زمان مشاهده، کیفیت و هویت فروشندگان در داده فعلی ترب احراز نشده؛ اعمال خودکار با این داده متوقف می‌ماند.</p></div></div>';
         if ($tab === "dashboard") {
             echo '<div class="vsp-cards">';
             foreach (
@@ -292,6 +322,8 @@ final class AdminUI
             }
         }
         if ($tab === "rules") {
+            $this->defaultsForm();
+            echo '<div class="vsp-section-title"><h2>گروه‌های زمان‌بندی</h2><p>هر گروه، فاصله بررسی و حداکثر عمر مجاز داده خودش را دارد.</p></div>';
             $this->rows("groups", $tab);
             if (current_user_can("vsp_manage")) {
                 $this->begin("group");
@@ -374,130 +406,46 @@ final class AdminUI
         $repo = new Repository();
         $old = $repo->get("mappings", absint($_GET["edit"] ?? 0));
         $m = $old["data"] ?? [];
-        $r = $old ? $repo->get("rules", $old["rule_version"])["data"] : [];
-        $currency = $r["currency"] ?? "IRT";
-        $unit = $currency === "IRR" ? "ریال" : "تومان";
+        $r = $old
+            ? $repo->get("rules", $old["rule_version"])["data"]
+            : RuleForm::defaults();
         $this->begin("mapping", [
             "expected_version" => $old["rule_version"] ?? "",
             "expected_mapping_hash" => $old
                 ? hash("sha256", $old["config"])
                 : "",
-            "rule_currency" => $currency,
         ]);
-        echo "<h2>" .
-            ($old ? "ویرایش تنظیمات محصول منتخب" : "ثبت تطبیق و قاعده محصول") .
-            "</h2>";
-        $this->input(
+        echo '<div class="vsp-editor"><div class="vsp-section-title"><h2>' .
+            ($old ? "تنظیمات اختصاصی محصول" : "افزودن محصول به پایش") .
+            "</h2><p>تنظیمات نسخه‌دار؛ ذخیره این فرم قیمت محصول را تغییر نمی‌دهد.</p></div>";
+        RuleForm::field(
             "شناسه محصول ساده یا variation",
             "product_id",
             $old ? (string) $old["product_id"] : "",
             "number",
         );
-        $this->input(
-            "لینک دقیق عمومی ترب",
-            "source_url",
-            $m["source_url"] ?? "",
-            "url",
-        );
-        foreach (
-            [
-                "model" => "مدل دقیق",
-                "quality" => "کیفیت دقیق (مثلاً OEM)",
-                "condition" => "نو/کارکرده",
-                "color" => "رنگ",
-                "frame" => "با فریم/بدون فریم",
-                "technical_code" => "کد فنی",
-            ]
-            as $key => $label
-        ) {
-            $this->input($label, $key, $m["attributes"][$key] ?? "");
-        }
-        $this->select(
-            "تطبیق",
-            "match_status",
-            [
-                "pending" => "نیازمند بررسی",
-                "confirmed" => "مدل و کیفیت را تأیید می‌کنم",
-            ],
-            $m["match_status"] ?? "pending",
-        );
-        $this->select(
-            "حالت محصول",
-            "mode",
-            [
-                "monitor" => "پایش",
-                "suggest" => "پیشنهاد",
-                "auto" => "خودکار با کنترل ایمنی",
-            ],
-            $m["mode"] ?? "monitor",
-        );
-        $this->select(
-            "فعال‌بودن محصول در برنامه",
-            "enabled",
-            ["1" => "فعال", "0" => "غیرفعال"],
-            !isset($m["enabled"]) || $m["enabled"] ? "1" : "0",
-        );
-        $this->input("کف (" . $unit . ")", "floor", $r["floor"] ?? "");
-        $this->input("سقف (" . $unit . ")", "ceiling", $r["ceiling"] ?? "");
-        $this->input(
-            "اختلاف مبلغی (" . $unit . ")",
-            "delta",
-            $r["delta"] ?? "1000",
-        );
-        $this->input(
-            "اختلاف درصدی (%)",
-            "delta_percent",
-            \Viratel\SmartPricing\Domain\Money::format(
-                (int) ($r["delta_bps"] ?? 100),
-                "IRR",
-            ),
-        );
-        $this->input(
-            "گام گردکردن (" . $unit . ")",
-            "round_step",
-            $r["round_step"] ?? "1",
-        );
-        $this->input(
-            "گروه برنامه",
-            "schedule_group",
-            $m["schedule_group"] ?? "normal",
-        );
-        $this->input(
-            "سقف تغییر هر بار (%)",
-            "max_change_percent",
-            \Viratel\SmartPricing\Domain\Money::format(
-                (int) ($r["max_change_bps"] ?? 1000),
-                "IRR",
-            ),
-        );
-        $this->input(
-            "سقف تغییر تجمعی روزانه (" . $unit . ")",
-            "max_daily_change",
-            $r["max_daily_change"] ?? "50000",
-        );
-        $this->select(
-            "قاعده",
-            "rule_type",
-            [
-                "fixed_below" => "مبلغ کمتر از رقیب",
-                "fixed_above" => "مبلغ بیشتر از رقیب",
-                "percent_below" => "درصد کمتر از رقیب",
-                "percent_above" => "درصد بیشتر از رقیب",
-                "match" => "تطبیق قیمت",
-            ],
-            $r["type"] ?? "fixed_below",
-        );
-        $this->select(
-            "مرجع قیمت",
-            "basis",
-            [
-                "min" => "کمترین مشاهده‌شده معتبر",
-                "mean" => "میانگین offers معتبر",
-                "max" => "بیشترین offers معتبر",
-            ],
-            $r["basis"] ?? "min",
-        );
+        ProductPanel::mappingFields($m);
+        RuleForm::rules($r);
+        echo "</div>";
         $this->end("ذخیره تنظیمات؛ بدون تغییر قیمت");
+    }
+    private function defaultsForm(): void
+    {
+        if (!current_user_can("vsp_manage")) {
+            return;
+        }
+        $this->begin("defaults");
+        echo '<div class="vsp-editor">';
+        RuleForm::card(
+            "۱",
+            "قالب عمومی قیمت‌گذاری",
+            "نقطه شروع فرم محصولات جدید؛ قواعد محصولات ثبت‌شده با تغییر این قالب عوض نمی‌شوند.",
+        );
+        echo '<div class="vsp-rule-summary"><span class="vsp-badge">پیشفرض امن</span><p>ابتدا مبنا و روش را انتخاب کنید؛ سپس کف، سقف و کنترل نوسان را تعیین کنید. هر محصول می‌تواند تنظیمات اختصاصی داشته باشد.</p></div>';
+        RuleForm::closeCard();
+        RuleForm::rules(RuleForm::defaults(), "", true);
+        echo "</div>";
+        $this->end("ذخیره قالب عمومی");
     }
     private function settingsForm(array $s): void
     {
@@ -505,58 +453,102 @@ final class AdminUI
             return;
         }
         $this->begin("settings");
-        $this->select(
+        echo '<div class="vsp-editor">';
+        RuleForm::card(
+            "۱",
+            "تنظیمات عمومی",
+            "هویت پنل، واحد فروشگاه و شیوه فعالیت افزونه.",
+        );
+        RuleForm::field(
+            "عنوان پنل",
+            "panel_title",
+            $s["panel_title"] ?? "قیمت‌گذاری هوشمند ویراتل",
+        );
+        RuleForm::field(
+            "رنگ اصلی پنل",
+            "accent_color",
+            $s["accent_color"] ?? "#7357e8",
+            "color",
+            "فقط ظاهر پنل ویراتل تغییر می‌کند.",
+        );
+        RuleForm::select(
             "حالت سراسری",
             "mode",
             [
-                "monitor" => "پایش",
-                "suggest" => "پیشنهاد",
-                "auto" => "خودکار برای منتخب‌ها",
+                "monitor" => "پایش — بدون تغییر قیمت",
+                "suggest" => "پیشنهاد — بررسی و تأیید منتخب",
+                "auto" => "خودکار — فقط داده معتبر",
             ],
             $s["mode"] ?? "monitor",
         );
-        $this->select(
-            "واحد WooCommerce (باید با تنظیم فروشگاه یکسان باشد)",
+        RuleForm::select(
+            "واحد واقعی WooCommerce",
             "currency",
-            ["" => "پیکربندی نشده", "IRT" => "تومان IRT", "IRR" => "ریال IRR"],
+            [
+                "" => "پیکربندی نشده",
+                "IRT" => "تومان (IRT)",
+                "IRR" => "ریال (IRR)",
+            ],
             $s["currency"] ?? "",
+            "باید با واحد فروشگاه یکسان باشد؛ این فرم واحد سایت را تغییر نمی‌دهد.",
         );
-        $this->input(
-            "دامنه‌های دقیق خودی، جدا با کاما",
+        RuleForm::closeCard();
+        RuleForm::card(
+            "۲",
+            "فروشگاه خودمان",
+            "این هویت‌ها برای حذف ویراتل از فهرست رقبا استفاده می‌شوند.",
+        );
+        RuleForm::field(
+            "دامنه‌های دقیق خودی",
             "own_domains",
             implode(",", $s["own_domains"] ?? []),
+            "text",
+            "دامنه‌ها را با کاما جدا کنید؛ مثل shop.example.com.",
         );
-        $this->input(
-            "شناسه فروشگاه‌های خودی، جدا با کاما",
+        RuleForm::field(
+            "شناسه‌های فروشگاه خودی",
             "own_store_ids",
             implode(",", $s["own_store_ids"] ?? []),
+            "text",
+            "فقط شناسه احرازشده منبع؛ نام مشابه کافی نیست.",
         );
-        $this->input(
+        RuleForm::closeCard();
+        RuleForm::card(
+            "۳",
+            "منبع و بودجه بررسی",
+            "درخواست‌های واقعی، خطاها و retry همگی از بودجه مصرف می‌کنند.",
+        );
+        RuleForm::select(
+            "پایش زمان‌بندی‌شده ترب",
+            "source_configured",
+            ["0" => "خاموش", "1" => "روشن، در حدود بودجه"],
+            !empty($s["source_configured"]) ? "1" : "0",
+            "دریافت در پس‌زمینه انجام می‌شود؛ صفحات فروشگاه منتظر آن نمی‌مانند.",
+        );
+        RuleForm::field(
             "بودجه روزانه درخواست",
             "daily_budget",
-            (string) ($s["daily_budget"] ?? 100),
+            $s["daily_budget"] ?? 100,
             "number",
         );
-        $this->input(
+        RuleForm::field(
             "بودجه ماهانه درخواست",
             "monthly_budget",
-            (string) ($s["monthly_budget"] ?? 3000),
+            $s["monthly_budget"] ?? 3000,
             "number",
         );
-        $this->select(
-            "فعال‌سازی پایش برنامه‌ریزی‌شده ترب",
-            "source_configured",
-            ["0" => "خاموش", "1" => "روشن (در حدود بودجه)"],
-            !empty($s["source_configured"]) ? "1" : "0",
-        );
-        $this->select(
-            "هنگام توقف، پایش هم متوقف شود",
+        RuleForm::select(
+            "هنگام توقف اضطراری",
             "pause_monitor",
-            ["0" => "پایش ادامه یابد", "1" => "پایش هم متوقف شود"],
+            [
+                "0" => "پایش ادامه یابد؛ اعمال قیمت متوقف",
+                "1" => "پایش و اعمال هر دو متوقف",
+            ],
             !empty($s["pause_monitor"]) ? "1" : "0",
         );
-        $this->end("ذخیره تنظیمات");
-        echo "<p>حذف داده هنگام uninstall پیشفرض خاموش است. قیمت‌گذاری ارزی، منابع دیگر، اعلان و Worker: پیکربندی نشده / توسعه بعدی.</p>";
+        RuleForm::closeCard();
+        echo '<section class="vsp-card vsp-safety-card"><span class="dashicons dashicons-lock" aria-hidden="true"></span><div><h2>داده و قیمت شما محفوظ است</h2><p>تغییر دستی قیمت، قفل محافظتی ایجاد می‌کند. موجودی با قیمت رقبا تغییر نمی‌کند. غیرفعال‌سازی و به‌روزرسانی افزونه داده‌ها را نگه می‌دارند.</p></div></section></div>';
+        $this->end("ذخیره تنظیمات عمومی");
     }
     private function rows(string $table, string $tab): void
     {
@@ -903,58 +895,39 @@ final class AdminUI
                 foreach (["source_configured", "pause_monitor"] as $k) {
                     $s[$k] = ($post[$k] ?? "0") === "1";
                 }
-                update_option("vsp_settings", $s, false);
-            } elseif ($op === "mapping") {
-                $attrs = [];
-                foreach (
-                    [
-                        "model",
-                        "quality",
-                        "condition",
-                        "color",
-                        "frame",
-                        "technical_code",
-                    ]
-                    as $key
-                ) {
-                    if (($post[$key] ?? "") !== "") {
-                        $attrs[$key] = sanitize_text_field($post[$key]);
-                    }
+                $s["panel_title"] = wp_html_excerpt(
+                    sanitize_text_field(
+                        $post["panel_title"] ??
+                            ($s["panel_title"] ?? "قیمت‌گذاری هوشمند ویراتل"),
+                    ),
+                    80,
+                );
+                if ($s["panel_title"] === "") {
+                    $s["panel_title"] = "قیمت‌گذاری هوشمند ویراتل";
                 }
+                $accent = sanitize_hex_color(
+                    $post["accent_color"] ?? ($s["accent_color"] ?? "#7357e8"),
+                );
+                if (!$accent) {
+                    throw new \InvalidArgumentException("accent_invalid");
+                }
+                $s["accent_color"] = $accent;
+                update_option("vsp_settings", $s, false);
+            } elseif ($op === "defaults") {
+                update_option(
+                    "vsp_pricing_defaults",
+                    RuleForm::parse($post, RuleForm::defaults(), true),
+                    false,
+                );
+            } elseif ($op === "mapping") {
                 $current = $repo->get("mappings", $id);
                 $oldRule = $current
                     ? $repo->get("rules", $current["rule_version"])["data"]
-                    : [];
-                $currency = $post["rule_currency"] ?? "IRT";
-                $rule = array_merge($oldRule, [
-                    "currency" => $currency,
-                    "floor" => $post["floor"] ?? "",
-                    "ceiling" => $post["ceiling"] ?? "",
-                    "delta" => $post["delta"] ?? "1000",
-                    "delta_bps" => \Viratel\SmartPricing\Domain\Money::parse(
-                        $post["delta_percent"] ?? "1",
-                        "IRR",
-                    ),
-                    "round_step" => $post["round_step"] ?? "1",
-                    "type" => $post["rule_type"] ?? "fixed_below",
-                    "max_change_bps" => \Viratel\SmartPricing\Domain\Money::parse(
-                        $post["max_change_percent"] ?? "10",
-                        "IRR",
-                    ),
-                    "max_daily_change" => $post["max_daily_change"] ?? "50000",
-                    "basis" => $post["basis"] ?? "min",
-                ]);
+                    : RuleForm::defaults();
                 (new MappingService())->save(
                     $id,
-                    [
-                        "source_url" => $post["source_url"] ?? "",
-                        "attributes" => $attrs,
-                        "match_status" => $post["match_status"] ?? "pending",
-                        "mode" => $post["mode"] ?? "monitor",
-                        "enabled" => ($post["enabled"] ?? "1") === "1",
-                        "schedule_group" => $post["schedule_group"] ?? "normal",
-                    ],
-                    $rule,
+                    ProductPanel::mapping($post, $current["data"] ?? []),
+                    RuleForm::parse($post, $oldRule),
                     $post["expected_version"] ?? "",
                     $post["expected_mapping_hash"] ?? "",
                 );
@@ -1068,7 +1041,13 @@ final class AdminUI
         }
         wp_safe_redirect(
             add_query_arg(
-                ["page" => "viratel-smart-pricing", "result" => $result],
+                [
+                    "page" => "viratel-smart-pricing",
+                    "result" => $result,
+                    "tab" => isset(self::TABS[$_POST["return_tab"] ?? ""])
+                        ? sanitize_key($_POST["return_tab"])
+                        : "dashboard",
+                ],
                 admin_url("admin.php"),
             ),
         );

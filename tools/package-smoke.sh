@@ -4,7 +4,8 @@ set -euo pipefail
 cd /workspace/torob-slaes
 VSP_RUNTIME=/workspace/vsp-runtime
 VSP_SITE="$VSP_RUNTIME/package-site"
-VSP_PACKAGE=/workspace/torob-slaes/dist/viratel-smart-pricing-0.1.0.zip
+VSP_VERSION=$(python3 -c 'import re;from pathlib import Path;print(re.search(r"Version:\s*([0-9.]+)",Path("viratel-smart-pricing/viratel-smart-pricing.php").read_text()).group(1))')
+VSP_PACKAGE="/workspace/torob-slaes/dist/viratel-smart-pricing-$VSP_VERSION.zip"
 test -f "$VSP_PACKAGE"
 export LD_LIBRARY_PATH="$VSP_RUNTIME/root/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 python3 - <<'PY'

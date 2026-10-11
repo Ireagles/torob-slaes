@@ -19,6 +19,7 @@ final class Plugin
             1,
         );
         (new \Viratel\SmartPricing\Admin\AdminUI())->register();
+        (new \Viratel\SmartPricing\Admin\ProductPanel())->register();
         if (defined("WP_CLI") && WP_CLI) {
             \WP_CLI::add_command(
                 "vsp",

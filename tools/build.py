@@ -2,12 +2,13 @@
 """Build install/source archives without runtime data, secrets or test fixtures in install ZIP."""
 from pathlib import Path
 import hashlib
+import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VERSION = "0.1.0"
-STAMP = (2026, 10, 10, 0, 0, 0)
+VERSION = re.search(r"Version:\s*([0-9.]+)", (ROOT / "viratel-smart-pricing/viratel-smart-pricing.php").read_text()).group(1)
+STAMP = (2026, 10, 11, 0, 0, 0)
 
 
 def archive(path, entries):
@@ -29,11 +30,11 @@ plugin_files = [p for p in (ROOT / "viratel-smart-pricing").rglob("*") if p.is_f
 docs = [p for p in (ROOT / "docs").rglob("*") if p.is_file()]
 archive(install, [(p.relative_to(ROOT).as_posix(), p) for p in plugin_files] + [("viratel-smart-pricing/docs/" + p.relative_to(ROOT / "docs").as_posix(), p) for p in docs])
 entries = []
-for folder in ("viratel-smart-pricing", "docs", "tests", "tools"):
+for folder in ("viratel-smart-pricing", "docs", "tests", "tools", "previews"):
     for p in (ROOT / folder).rglob("*"):
         if p.is_file() and "results" not in p.relative_to(ROOT).parts and "__pycache__" not in p.parts:
             entries.append(("viratel-smart-pricing-source/" + p.relative_to(ROOT).as_posix(), p))
-for name in ("README.md", ".gitignore"):
+for name in ("README.md", ".gitignore", "LICENSE"):
     entries.append(("viratel-smart-pricing-source/" + name, ROOT / name))
 archive(source, entries)
 with zipfile.ZipFile(install) as z:

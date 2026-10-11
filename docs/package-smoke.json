@@ -1,5 +1,5 @@
 {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "environment": "isolated local vsp_package",
     "zip_independent_of_checkout": true,
     "fresh_install_passive": true,
@@ -7,5 +7,5 @@
     "http_requests": 0,
     "price_changes": 0,
     "deactivate_reinstall_preserves_mapping": true,
-    "checked_at": "2026-10-10T23:54:57+00:00"
+    "checked_at": "2026-10-11T01:03:12+00:00"
 }

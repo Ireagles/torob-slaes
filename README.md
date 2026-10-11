@@ -2,15 +2,16 @@
 
 ## دریافت افزونه
 
-- [دانلود ZIP قابل‌نصب 0.1.0](https://github.com/Ireagles/torob-slaes/raw/refs/heads/main/downloads/viratel-smart-pricing-0.1.0.zip)
-- [دانلود کد، آزمون‌ها و مستندات](https://github.com/Ireagles/torob-slaes/raw/refs/heads/main/downloads/viratel-smart-pricing-source-0.1.0.zip)
+- [دانلود ZIP قابل‌نصب 0.2.0](https://github.com/Ireagles/torob-slaes/raw/refs/heads/main/downloads/viratel-smart-pricing-0.2.0.zip)
+- [دانلود کد، آزمون‌ها و مستندات](https://github.com/Ireagles/torob-slaes/raw/refs/heads/main/downloads/viratel-smart-pricing-source-0.2.0.zip)
 - [SHA256 فایل‌ها](downloads/SHA256SUMS)
 
-برای نصب در WordPress، فایل **viratel-smart-pricing-0.1.0.zip** را در «افزونه‌ها ← افزودن ← بارگذاری افزونه» انتخاب کنید. ZIP کل مخزن و source ZIP، بسته نصب WordPress نیستند. ابتدا روی staging نصب کنید و [راهنمای فارسی](docs/guide-fa.md) را بخوانید.
+برای نصب در WordPress، فایل **viratel-smart-pricing-0.2.0.zip** را در «افزونه‌ها ← افزودن ← بارگذاری افزونه» انتخاب کنید. ZIP کل مخزن و source ZIP، بسته نصب WordPress نیستند. ابتدا روی staging نصب کنید و [راهنمای فارسی](docs/guide-fa.md) را بخوانید.
 
 
 افزونه آزمایشی WordPress/WooCommerce مطابق بریف فارسی. نصب اولیه: **پایش**؛ دریافت زمان‌بندی‌شده پیشفرض خاموش. هیچ سایت یا قیمت production تغییر نکرده است.
 
+- [راهنمای سه صفحه جدید و تصاویر](docs/admin-ui-fa.md)
 - [وضعیت اجرا و معیارهای پذیرش](docs/implementation-status.md)
 - [راهنمای فارسی](docs/guide-fa.md)
 - [دریافت واقعی ترب و موانع](docs/data-feasibility.md)

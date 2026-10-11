@@ -1,3 +1,5 @@
 /dist/
 /tests/results/
 *.log
+
+.superdesign/

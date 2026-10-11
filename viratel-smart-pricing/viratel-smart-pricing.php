@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Viratel Smart Pricing
  * Description: پایش و پیشنهاد قیمت رقابتی قطعات موبایل با محدودیت‌های ایمن.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires at least: 7.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
@@ -13,7 +13,7 @@
 if (!defined("ABSPATH")) {
     exit();
 }
-define("VSP_VERSION", "0.1.0");
+define("VSP_VERSION", "0.2.0");
 define("VSP_FILE", __FILE__);
 spl_autoload_register(function ($class) {
     $prefix = "Viratel\\SmartPricing\\";

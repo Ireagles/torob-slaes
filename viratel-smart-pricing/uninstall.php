@@ -2,7 +2,8 @@
 if (!defined("WP_UNINSTALL_PLUGIN")) {
     exit();
 }
-$s = get_option("vsp_settings", []);
+$s = get_option("vsp_settings",
+        "vsp_pricing_defaults", []);
 if (empty($s["delete_on_uninstall"])) {
     return;
 }
@@ -26,6 +27,7 @@ foreach (
 foreach (
     [
         "vsp_settings",
+        "vsp_pricing_defaults",
         "vsp_schema",
         "vsp_active",
         "vsp_circuit_until",
