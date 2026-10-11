@@ -1,0 +1,11 @@
+{
+    "version": "0.1.0",
+    "environment": "isolated local vsp_package",
+    "zip_independent_of_checkout": true,
+    "fresh_install_passive": true,
+    "tables": 9,
+    "http_requests": 0,
+    "price_changes": 0,
+    "deactivate_reinstall_preserves_mapping": true,
+    "checked_at": "2026-10-10T23:54:57+00:00"
+}

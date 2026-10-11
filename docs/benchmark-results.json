@@ -1,0 +1,35 @@
+{
+    "run": "678a1de4-3169-4ff0-9fb5-f41ee3a21793",
+    "products": 2000,
+    "jobs": 8000,
+    "first_id": 18143,
+    "last_id": 26142,
+    "product_first": 35,
+    "product_last": 2034,
+    "validation_chunks": 20,
+    "apply_chunks": 40,
+    "csv_validation_seconds": 2.274312973022461,
+    "csv_apply_seconds": 182.77484917640686,
+    "completed": 8000,
+    "fetch_simulations": 800,
+    "is_test": true,
+    "network_requests": 0,
+    "writes": 0,
+    "peak_bytes": 249151488,
+    "discarded_setup_attempts": 8000,
+    "logical_plugin_bytes_before": 47988736,
+    "runner_start": 1791652298.58058,
+    "latency_p50_ms": 5,
+    "latency_p95_ms": 11,
+    "action_status_counts": {
+        "complete": "8000"
+    },
+    "other_queue_sentinel": "pending",
+    "verified_price_changes": 0,
+    "log_times_utc": {
+        "started": "2026-10-10 17:11:39",
+        "finished": "2026-10-10 17:13:11"
+    },
+    "worker_wall_seconds": 92,
+    "logical_plugin_bytes_after": 67239936
+}

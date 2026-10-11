@@ -1,0 +1,134 @@
+{
+  "provider": "torob",
+  "source_url": "https://torob.com/p/1189b812-9de1-4016-b72d-fa7d3292ff9b/%D8%A8%D8%A7%D8%AA%D8%B1%DB%8C-%D8%B4%DB%8C%D8%A7%DB%8C%D9%88%D9%85%DB%8C-mi-10t-lite/",
+  "source_observed_at": null,
+  "cache_age_seconds": null,
+  "freshness": "unknown",
+  "coverage": "partial",
+  "offers": [
+    {
+      "seller_name": "موبایل 140",
+      "store_id": null,
+      "seller_url": "",
+      "price": "35550000",
+      "currency": "IRR",
+      "in_stock": true,
+      "observed_at": null,
+      "attributes": {},
+      "shipping": null,
+      "confidence": {
+        "level": "unverified",
+        "reasons": [
+          "source_time_unknown",
+          "seller_identity_unknown",
+          "quality_unknown"
+        ]
+      }
+    },
+    {
+      "seller_name": "پیت شاپ",
+      "store_id": null,
+      "seller_url": "",
+      "price": "12440000",
+      "currency": "IRR",
+      "in_stock": true,
+      "observed_at": null,
+      "attributes": {},
+      "shipping": null,
+      "confidence": {
+        "level": "unverified",
+        "reasons": [
+          "source_time_unknown",
+          "seller_identity_unknown",
+          "quality_unknown"
+        ]
+      }
+    },
+    {
+      "seller_name": "پارس تل شاپ",
+      "store_id": null,
+      "seller_url": "",
+      "price": "19300000",
+      "currency": "IRR",
+      "in_stock": true,
+      "observed_at": null,
+      "attributes": {},
+      "shipping": null,
+      "confidence": {
+        "level": "unverified",
+        "reasons": [
+          "source_time_unknown",
+          "seller_identity_unknown",
+          "quality_unknown"
+        ]
+      }
+    },
+    {
+      "seller_name": "فوناکس",
+      "store_id": null,
+      "seller_url": "",
+      "price": "20181000",
+      "currency": "IRR",
+      "in_stock": true,
+      "observed_at": null,
+      "attributes": {},
+      "shipping": null,
+      "confidence": {
+        "level": "unverified",
+        "reasons": [
+          "source_time_unknown",
+          "seller_identity_unknown",
+          "quality_unknown"
+        ]
+      }
+    },
+    {
+      "seller_name": "نیترو باطری",
+      "store_id": null,
+      "seller_url": "",
+      "price": "20793910",
+      "currency": "IRR",
+      "in_stock": true,
+      "observed_at": null,
+      "attributes": {},
+      "shipping": null,
+      "confidence": {
+        "level": "unverified",
+        "reasons": [
+          "source_time_unknown",
+          "seller_identity_unknown",
+          "quality_unknown"
+        ]
+      }
+    },
+    {
+      "seller_name": "ماهان باتری",
+      "store_id": null,
+      "seller_url": "",
+      "price": "21450000",
+      "currency": "IRR",
+      "in_stock": true,
+      "observed_at": null,
+      "attributes": {},
+      "shipping": null,
+      "confidence": {
+        "level": "unverified",
+        "reasons": [
+          "source_time_unknown",
+          "seller_identity_unknown",
+          "quality_unknown"
+        ]
+      }
+    }
+  ],
+  "is_test": false,
+  "parser_version": "public-jsonld-1",
+  "billable_units": null,
+  "http_status": 200,
+  "bytes": 162578,
+  "status": "ok",
+  "canonical_product_id": "1189b812-9de1-4016-b72d-fa7d3292ff9b",
+  "source_title": "باتری شیائومی Mi 10T Lite",
+  "currency": "IRR",
+  "fetched_at": "2026-10-10T16:52:10.790367+00:00"
+}
